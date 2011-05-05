@@ -96,7 +96,7 @@ begin
         end;
       CDN_FOLDERCHANGE:
         begin
-          s[0] := Chr(GetCurrentDirectory(255, @s[1]));
+          s[0] := AnsiChar(Chr(GetCurrentDirectory(255, @s[1])));
           b := True;
           with OpenDBDialog.FComboBox do
           begin

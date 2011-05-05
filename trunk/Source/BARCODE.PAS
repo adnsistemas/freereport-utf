@@ -724,7 +724,7 @@ var
 begin
         checksum := 0;
         // Startcode
-        result := tabelle_39[FindIdx('*')].data + '0';
+        result := string(tabelle_39[FindIdx('*')].data) + '0';
 
         for i:=1 to Length(FText) do
         begin
@@ -1281,7 +1281,7 @@ end;
 var
         i, idx : integer;
 begin
-        result := tabelle_cb[Find_Codabar('A')].data + '0';
+        result := string(tabelle_cb[Find_Codabar('A')].data) + '0';
         for i:=1 to Length(FText) do
         begin
                 idx := Find_Codabar(FText[i]);

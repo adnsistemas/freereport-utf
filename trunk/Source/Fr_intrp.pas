@@ -70,7 +70,11 @@ type
 
   PVariable = ^TVariable;
   TVariable = record
+  {$IFDEF UNICODE}
+    Name: PAnsiString;
+  {$ELSE}
     Name: PString;
+  {$ENDIF}
     Value: Variant;
   end;
 
