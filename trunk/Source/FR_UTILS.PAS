@@ -20,15 +20,17 @@ uses
 
 
 procedure frReadMemo(Stream: TStream; l: TStrings);
+procedure frReadMemo23(Stream: TStream; l: TStrings);
 procedure frReadMemo22(Stream: TStream; l: TStrings);
 procedure frWriteMemo(Stream: TStream; l: TStrings);
 function frReadString(Stream: TStream): String;
-function frReadString22(Stream: TStream): String;
+function frReadString23(Stream: TStream): AnsiString;
+function frReadString22(Stream: TStream): AnsiString;
 procedure SaveToFR3Stream(Report: TfrReport; Stream: TStream);
 function StrToXML(const s: String): String;
 function frStreamToString(Stream: TStream): String;
 {$IFDEF FREEREP2217READ}
-function frReadString2217(Stream: TStream): String;
+function frReadString2217(Stream: TStream): AnsiString;
 {$ENDIF}
 procedure frWriteString(Stream: TStream; s: String);
 procedure frEnableControls(c: Array of TControl; e: Boolean);
@@ -92,6 +94,26 @@ begin
     Stream.Read(b, 1);
 end;
 
+procedure frReadMemo23(Stream: TStream; l: TStrings);
+var
+  s: AnsiString;
+  b: Byte;
+  n: Word;
+begin
+  l.Clear;
+  Stream.Read(n, 2);
+  if n > 0 then
+    repeat
+      Stream.Read(n, 2);
+      SetLength(s, n);
+      Stream.Read(s[1], n);
+      l.Add(s);
+      Stream.Read(b, 1);
+    until b = 0
+  else
+    Stream.Read(b, 1);
+end;
+
 procedure frWriteMemo(Stream: TStream; l: TStrings);
 var
   s: String;
@@ -127,6 +149,19 @@ begin
   Result := s;
 end;
 
+function frReadString23(Stream: TStream): AnsiString;
+var
+  s: AnsiString;
+  n: Word;
+  b: Byte;
+begin
+  Stream.Read(n, 2);
+  SetLength(s, n);
+  Stream.Read(s[1], n);
+  Stream.Read(b, 1);
+  Result := s;
+end;
+
 procedure frWriteString(Stream: TStream; s: String);
 var
   b: Byte;
@@ -141,7 +176,7 @@ end;
 
 procedure frReadMemo22(Stream: TStream; l: TStrings);
 var
-  s: String;
+  s: AnsiString;
   i: Integer;
   b: Byte;
 begin
@@ -159,7 +194,7 @@ begin
     end
     else if b <> 0 then
     begin
-      s[i] := Chr(b);
+      s[i] := AnsiChar(b);
       Inc(i);
       if i > 4096 then
         SetLength(s, Length(s) + 4096);
@@ -167,9 +202,9 @@ begin
   until b = 0;
 end;
 
-function frReadString22(Stream: TStream): String;
+function frReadString22(Stream: TStream): AnsiString;
 var
-  s: String;
+  s: AnsiString;
   i: Integer;
   b: Byte;
 begin
@@ -181,7 +216,7 @@ begin
       SetLength(s, i - 1)
     else
     begin
-      s[i] := Chr(b);
+      s[i] := AnsiChar(b);
       Inc(i);
       if i > 4096 then
         SetLength(s, Length(s) + 4096);
@@ -191,7 +226,7 @@ begin
 end;
 
 {$IFDEF FREEREP2217READ}
-function frReadString2217(Stream: TStream): String;
+function frReadString2217(Stream: TStream): AnsiString;
 var
   I: Integer;
 begin
