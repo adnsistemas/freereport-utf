@@ -28,7 +28,9 @@ type
     Label4: TLabel;
     Image1: TImage;
     Bevel2: TBevel;
+    Label5: TLabel;
     procedure FormCreate(Sender: TObject);
+    procedure Label5Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -40,6 +42,8 @@ var
 
 implementation
 
+uses shellapi;
+
 {$R *.DFM}
 
 procedure TfrAboutForm.FormCreate(Sender: TObject);
@@ -47,6 +51,11 @@ begin
   Caption := LoadStr(frRes + 540);
   Button1.Caption := LoadStr(SOk);
 //  Label2.Caption := Label2.Caption + ' build 2';
+end;
+
+procedure TfrAboutForm.Label5Click(Sender: TObject);
+begin
+  ShellExecute(Handle,'open','http://www.adnsistemas.com.ar/',nil,nil,0);
 end;
 
 end.
