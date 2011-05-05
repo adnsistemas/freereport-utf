@@ -148,6 +148,8 @@ begin
   Rich2.Lines.SaveToStream(st);
   st.Position := 0;
   Rich1.Lines.LoadFromStream(st);
+  if Rich1 = SRichEdit then
+    Rich1.Lines.Add(''); //para evitar que se "coma" el último caracter
   st.Free;
 end;
 
@@ -221,13 +223,14 @@ begin
 
     LowDy := 0;
     HighDY := 1000000;
-    while HighDy - LowDy > 1 do
+
+    MaxLen := SRichEdit.GetTextLen;
+    while HighDy - LowDy > 8 do //no tiene ningún sentido seguir si ya pasé el mínimo
     begin
       NewDY := LowDy + (HighDy - LowDy) div 2;
       rc := Rect(0, 0, Round(DX * 1440 / LogX), Round(NewDY * 1440.0 / LogY));
       rcPage := rc;
       LastChar := CharFrom;
-      MaxLen := SRichEdit.GetTextLen;
       chrg.cpMax := -1;
       repeat
         chrg.cpMin := LastChar;
@@ -243,7 +246,12 @@ begin
     ReleaseDC(0, hdc);
   end;
   SRichEdit.Perform(EM_FORMATRANGE, 0, 0);
-  if HighDy < 2 then HighDy := 8;
+  if HighDy < MinHeight then begin
+    (* verificar que no sea un problema de cálculo cuando queda una última línea *)
+    SRichEdit.Lines.Add('.');
+    HighDy := DoCalcHeight div 2;
+    SRichEdit.Lines.Delete(SRichEdit.Lines.Count-1);
+  end;
   Result := HighDy;
 end;
 
