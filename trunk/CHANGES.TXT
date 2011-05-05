@@ -1,3 +1,9 @@
+Changes in v2.35:
+-----------------------------------------------------------------------------
+- Delphi2010 support;
+- RichEdit last line print problem fix;
+- Multiple bands of the same kind print even with empty datasets;
+
 Changes in v2.34:
 -----------------------------------------------------------------------------
 - Delphi2006 support; 
