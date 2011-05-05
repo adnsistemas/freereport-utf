@@ -30,11 +30,11 @@ type
   end;
 
   TProp = class
-    Addr: PChar;
+    Addr: PAnsiChar;
     Style: TCtrlStyle;
     Editor: TPropEditor;
     Enabled: Boolean;
-    constructor Create(a: PChar; st: TCtrlStyle; de: TPropEditor); virtual;
+    constructor Create(a: PAnsiChar; st: TCtrlStyle; de: TPropEditor); virtual;
   end;
 
   TfrInspForm = class(TForm)
@@ -90,7 +90,7 @@ implementation
 
 {$R *.DFM}
 
-constructor TProp.Create(a: PChar; st: TCtrlStyle; de: TPropEditor);
+constructor TProp.Create(a: PAnsiChar; st: TCtrlStyle; de: TPropEditor);
 begin
   inherited Create;
   Addr := a;

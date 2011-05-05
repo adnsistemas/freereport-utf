@@ -1754,10 +1754,14 @@ var
         {$IFDEF VER180}
         GetCharacterPlacement(Canvas.Handle, PChar(str), Length(str), nw, GCP, GCP_JUSTIFY + GCP_MAXEXTENT)
         {$ELSE}
-          {$IFDEF VER150}
-            GetCharacterPlacement(Canvas.Handle, PChar(str), Length(str), nw, GCP, GCP_JUSTIFY + GCP_MAXEXTENT)
+          {$IFDEF VER210}
+          GetCharacterPlacement(Canvas.Handle, PChar(str), Length(str), nw, GCP, GCP_JUSTIFY + GCP_MAXEXTENT)
           {$ELSE}
-            GetCharacterPlacement(Canvas.Handle, PChar(str), BOOL(Length(str)), BOOL(nw), GCP, GCP_JUSTIFY + GCP_MAXEXTENT)
+            {$IFDEF VER150}
+              GetCharacterPlacement(Canvas.Handle, PChar(str), Length(str), nw, GCP, GCP_JUSTIFY + GCP_MAXEXTENT)
+            {$ELSE}
+              GetCharacterPlacement(Canvas.Handle, PChar(str), BOOL(Length(str)), BOOL(nw), GCP, GCP_JUSTIFY + GCP_MAXEXTENT)
+            {$ENDIF}
           {$ENDIF}
         {$ENDIF}
           else
@@ -4670,96 +4674,99 @@ var
 
   begin
     b := Bands[Bnds[Level, bpData]];
-    while (b <> nil) and (b.Dataset <> nil) do
+    while (b <> nil) do
     begin
-      b.DataSet.First;
-      if Mode = pmBuildList then
-        AddRecord(b, rtFirst) else
-        b.Positions[psLocal] := 1;
-
-      b1 := Bands[btGroupHeader];
-      while b1 <> nil do
+      if b.Dataset <> nil then
       begin
-        b1.Positions[psLocal] := 0;
-        b1.Positions[psGlobal] := 0;
-        b1 := b1.Next;
-      end;
+        b.DataSet.First;
+        if Mode = pmBuildList then
+          AddRecord(b, rtFirst) else
+          b.Positions[psLocal] := 1;
 
-      if not b.DataSet.Eof then
-      begin
-        if (Level = 1) and HasGroups then
-          InitGroups(Bands[btGroupHeader]);
-        if b.HeaderBand <> nil then
-          AddToStack(b.HeaderBand);
-        if b.FooterBand <> nil then
-          b.FooterBand.InitValues;
-
-        while not b.DataSet.Eof do
+        b1 := Bands[btGroupHeader];
+        while b1 <> nil do
         begin
-          Application.ProcessMessages;
-          if MasterReport.Terminated then break;
-          AddToStack(b);
-          WasPrinted := True;
-          if Level < MaxLevel then
-          begin
-            DoLoop(Level + 1);
-            if BndStackTop > 0 then
-              if b.PrintIfSubsetEmpty then
-                ShowStack
-              else
-              begin
-                Dec(BndStackTop);
-                WasPrinted := False;
-              end;
-          end
-          else ShowStack;
-
-          b.DataSet.Next;
-
-          if (Level = 1) and HasGroups then
-          begin
-            b1 := Bands[btGroupHeader];
-            while b1 <> nil do
-            begin
-              if (frParser.Calc(b1.GroupCondition) <> b1.LastGroupValue) or
-                b.Dataset.Eof then
-              begin
-                ShowBand(b.FooterBand);
-                b2 := Bands[btGroupHeader].LastBand;
-                while b2 <> b1 do
-                begin
-                  ShowBand(b2.FooterBand);
-                  b2.Positions[psLocal] := 0;
-                  b2 := b2.Prev;
-                end;
-                ShowBand(b1.FooterBand);
-                if not b.DataSet.Eof then
-                begin
-                  if b1.NewPageAfter then NewPage;
-                  InitGroups(b1);
-                  ShowBand(b.HeaderBand);
-                  b.Positions[psLocal] := 0;
-                end;
-                break;
-              end;
-              b1 := b1.Next;
-            end;
-          end;
-
-          if Mode = pmBuildList then
-            AddRecord(b, rtNext)
-          else if WasPrinted then
-          begin
-            Inc(CurPos);
-            Inc(b.Positions[psGlobal]);
-            Inc(b.Positions[psLocal]);
-            if not b.DataSet.Eof and b.NewPageAfter then NewPage;
-          end;
-          if MasterReport.Terminated then break;
+          b1.Positions[psLocal] := 0;
+          b1.Positions[psGlobal] := 0;
+          b1 := b1.Next;
         end;
-        if BndStackTop = 0 then
-          ShowBand(b.FooterBand) else
-          Dec(BndStackTop);
+
+        if not b.DataSet.Eof then
+        begin
+          if (Level = 1) and HasGroups then
+            InitGroups(Bands[btGroupHeader]);
+          if b.HeaderBand <> nil then
+            AddToStack(b.HeaderBand);
+          if b.FooterBand <> nil then
+            b.FooterBand.InitValues;
+
+          while not b.DataSet.Eof do
+          begin
+            Application.ProcessMessages;
+            if MasterReport.Terminated then break;
+            AddToStack(b);
+            WasPrinted := True;
+            if Level < MaxLevel then
+            begin
+              DoLoop(Level + 1);
+              if BndStackTop > 0 then
+                if b.PrintIfSubsetEmpty then
+                  ShowStack
+                else
+                begin
+                  Dec(BndStackTop);
+                  WasPrinted := False;
+                end;
+            end
+            else ShowStack;
+
+            b.DataSet.Next;
+
+            if (Level = 1) and HasGroups then
+            begin
+              b1 := Bands[btGroupHeader];
+              while b1 <> nil do
+              begin
+                if (frParser.Calc(b1.GroupCondition) <> b1.LastGroupValue) or
+                  b.Dataset.Eof then
+                begin
+                  ShowBand(b.FooterBand);
+                  b2 := Bands[btGroupHeader].LastBand;
+                  while b2 <> b1 do
+                  begin
+                    ShowBand(b2.FooterBand);
+                    b2.Positions[psLocal] := 0;
+                    b2 := b2.Prev;
+                  end;
+                  ShowBand(b1.FooterBand);
+                  if not b.DataSet.Eof then
+                  begin
+                    if b1.NewPageAfter then NewPage;
+                    InitGroups(b1);
+                    ShowBand(b.HeaderBand);
+                    b.Positions[psLocal] := 0;
+                  end;
+                  break;
+                end;
+                b1 := b1.Next;
+              end;
+            end;
+
+            if Mode = pmBuildList then
+              AddRecord(b, rtNext)
+            else if WasPrinted then
+            begin
+              Inc(CurPos);
+              Inc(b.Positions[psGlobal]);
+              Inc(b.Positions[psLocal]);
+              if not b.DataSet.Eof and b.NewPageAfter then NewPage;
+            end;
+            if MasterReport.Terminated then break;
+          end;
+          if BndStackTop = 0 then
+            ShowBand(b.FooterBand) else
+            Dec(BndStackTop);
+        end;
       end;
       b := b.Next;
     end;

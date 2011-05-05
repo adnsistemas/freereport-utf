@@ -66,6 +66,16 @@
   {$WARN UNSAFE_CODE OFF}
 {$ENDIF}
 
+{$IFDEF VER210} // Delphi 2010
+  {$DEFINE Delphi4}
+  {$DEFINE Delphi5}
+  {$DEFINE Delphi6}
+  {$DEFINE Delphi7}
+  {$DEFINE Delphi9}
+  {$DEFINE Delphi10}
+  {$WARN UNSAFE_CODE OFF}
+{$ENDIF}
+
 {$IFDEF VER93}       // Borland C++ Builder 1.0
   {$DEFINE Delphi2}
 {$ENDIF}

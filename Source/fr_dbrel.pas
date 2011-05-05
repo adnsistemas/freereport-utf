@@ -93,7 +93,7 @@ begin
 {$ELSE}
     result := nil
   else
-    Result := DataSet.GetBookmark;
+    Result := TfrBookmark(DataSet.GetBookmark);
 {$ENDIF}
 end;
 
@@ -104,7 +104,7 @@ begin
 {$IFDEF IBO}
   DataSet.Bookmark := Bookmark;
 {$ELSE}
-  DataSet.GotoBookmark(BookMark);
+  DataSet.GotoBookmark(TBytes(BookMark));
 {$ENDIF}
 end;
 
@@ -112,7 +112,7 @@ procedure frFreeBookmark(DataSet: TfrTDataSet; Bookmark: TfrBookmark);
 begin
 {$IFNDEF IBO}
   if Assigned(Bookmark) then
-    DataSet.FreeBookmark(BookMark);
+    DataSet.FreeBookmark(TBytes(BookMark));
 {$ENDIF}
 end;
 
@@ -128,7 +128,7 @@ begin
     dbiCompareBookmarks(DataSet.Handle, b1, b2, n);
     Result := n = 0;
  {$ELSE}
-    Result := DataSet.CompareBookmarks(b1, b2) = 0;
+    Result := DataSet.CompareBookmarks(TBytes(b1), TBytes(b2)) = 0;
  {$ENDIF}
 {$ENDIF}
 end;
