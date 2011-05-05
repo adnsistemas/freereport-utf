@@ -690,7 +690,7 @@ function GetDefaultDataSet: TfrTDataSet;
 
 
 const
-  frCurrentVersion = 23; // this is current version (2.3)
+  frCurrentVersion = 24; // this is current version (2.35 -> 2.4)
   frSpecCount = 9;
   frSpecFuncs: Array[0..frSpecCount - 1] of String = ('PAGE#', '',
     'DATE', 'TIME', 'LINE#', 'LINETHROUGH#', 'COLUMN#', 'CURRENT#', 'TOTALPAGES');
@@ -920,30 +920,30 @@ end;
 
 function ReadString(Stream: TStream): String;
 begin
-  if frVersion >= 23 then
-{$IFDEF FREEREP2217READ}
+  if frVersion >= 24 then //unicode
       Result := frReadString(Stream) // load in current format
+  else if frVersion >= 23 then
+      Result := frReadString23(Stream) // load ansi format
   else
+{$IFDEF FREEREP2217READ}
     if (frVersion = 22) and FRE_COMPATIBLE_READ then
       Result := frReadString2217(Stream) // load in bad format
     else
-{$ELSE}
-    Result := frReadString(Stream) else
 {$ENDIF}
     Result := frReadString22(Stream);
 end;
 
 procedure ReadMemo(Stream: TStream; Memo: TStrings);
 begin
-  if frVersion >= 23 then
-{$IFDEF FREEREP2217READ}
-      frReadMemo(Stream, Memo) // load in current format
+  if frVersion >= 24 then //unicode
+    frReadMemo(Stream, Memo) // load in current format
+  else if frVersion >= 23 then
+    frReadMemo23(Stream, Memo) // load ansi format
   else
+{$IFDEF FREEREP2217READ}
     if (frVersion = 22) and FRE_COMPATIBLE_READ then
       Memo.Text := frReadString2217(Stream) // load in bad format
     else
-{$ELSE}
-    frReadMemo(Stream, Memo) else
 {$ENDIF}
     frReadMemo22(Stream, Memo);
 end;
@@ -1202,7 +1202,8 @@ begin
   begin
     if StreamMode = smDesigning then
       if frVersion >= 23 then
-        Name := ReadString(Stream) else
+        Name  := ReadString(Stream)
+      else
         CreateUniqueName;
     Read(x, 30); // this is equal to, but much faster:
 {    Read(x, 4); Read(y, 4); Read(dx, 4); Read(dy, 4);
@@ -1215,7 +1216,7 @@ begin
     if StreamMode = smDesigning then
     begin
       Read(Format, 4);
-      FormatStr := ReadString(Stream);
+      FormatStr := ReadString(Stream)
     end;
     ReadMemo(Stream, Memo);
     if (frVersion >= 23) and (StreamMode = smDesigning) then
