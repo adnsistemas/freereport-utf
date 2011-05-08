@@ -1277,7 +1277,7 @@ var
 
   procedure WriteStr(const s: String);
   begin
-    Stream.Write(s[1], Length(s));
+    Stream.Write(s[1], Length(s) * sizeof(s[1]));
   end;
 
 begin
@@ -2174,7 +2174,7 @@ var
 
   procedure WriteStr(const s: String);
   begin
-    Stream.Write(s[1], Length(s));
+    Stream.Write(s[1], Length(s) * sizeof(s[1]));
   end;
 
 begin
@@ -2569,7 +2569,7 @@ var
 
   procedure WriteStr(const s: String);
   begin
-    Stream.Write(s[1], Length(s));
+    Stream.Write(s[1], Length(s) * sizeof(s[1]));
   end;
 
 begin
@@ -2828,7 +2828,7 @@ procedure TfrSubReportView.SaveToFR3Stream(Stream: TStream);
 
   procedure WriteStr(const s: String);
   begin
-    Stream.Write(s[1], Length(s));
+    Stream.Write(s[1], Length(s) * sizeof(s[1]));
   end;
  
 begin
@@ -3053,7 +3053,7 @@ var
 
   procedure WriteStr(const s: String);
   begin
-    Stream.Write(s[1], Length(s));
+    Stream.Write(s[1], Length(s) * sizeof(s[1]));
   end;
 
 begin
@@ -3201,7 +3201,7 @@ procedure TfrLineView.SaveToFR3Stream(Stream: TStream);
 
   procedure WriteStr(const s: String);
   begin
-    Stream.Write(s[1], Length(s));
+    Stream.Write(s[1], Length(s) * sizeof(s[1]);
   end;
 
 begin
