@@ -3034,15 +3034,58 @@ begin
 end;
 
 procedure TfrPictureView.GetBlob(b: TfrTField);
+  function TryFormats:boolean;
+  var
+    grp:TGraphic;
+  begin
+    result := False;
+    try
+    {$IFDEF JPEG}
+      grp := TJPEGImage.Create;
+      try
+        grp.Assign(b);
+        result := True;
+        exit;
+      except
+        grp.Free;
+      end;
+    {$ENDIF}
+      grp := TIcon.Create;
+      try
+        grp.Assign(b);
+        result := True;
+        exit;
+      except
+        grp.Free;
+      end;
+      grp := TMetafile.Create;
+      try
+        grp.Assign(b);
+        result := True;
+        exit;
+      except
+        grp.Free;
+      end;
+    finally
+      if result then
+        Picture.Assign(grp);
+      grp.Free;
+    end;
+  end;
 begin
-  if b.IsNull then
-    Picture.Assign(nil)
-  else
-{$IFDEF IBO}
-    b.AssignTo(Picture);
-{$ELSE}
-    Picture.Assign(b);
-{$ENDIF}
+  try
+    if b.IsNull then
+      Picture.Assign(nil)
+    else
+  {$IFDEF IBO}
+      b.AssignTo(Picture);
+  {$ELSE}
+      Picture.Assign(b);
+  {$ENDIF}
+  except
+    if not TryFormats then
+      Picture.Assign(nil);
+  end;
 end;
 
 procedure TfrPictureView.SaveToFR3Stream(Stream: TStream);
@@ -3201,7 +3244,7 @@ procedure TfrLineView.SaveToFR3Stream(Stream: TStream);
 
   procedure WriteStr(const s: String);
   begin
-    Stream.Write(s[1], Length(s) * sizeof(s[1]);
+    Stream.Write(s[1], Length(s) * sizeof(s[1]));
   end;
 
 begin
