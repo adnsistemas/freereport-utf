@@ -25,7 +25,7 @@ package FREEREP210;
 {$WRITEABLECONST ON}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DESCRIPTION 'FreeReport 2.33 Components'}
+{$DESCRIPTION 'FreeReport 2.40 Components'}
 {$IMPLICITBUILD OFF}
 
 requires
@@ -43,7 +43,7 @@ contains
   fr_const in 'fr_const.pas',
   fr_prntr in 'fr_prntr.pas',
   fr_pars in 'fr_pars.pas',
-  fr_about in 'FR_ABOUT.PAS',
+  FR_ABOUT in 'FR_ABOUT.PAS',
   fr_barc in 'fr_barc.pas',
   fr_bnded in 'fr_bnded.pas',
   fr_btyp in 'fr_btyp.pas',
