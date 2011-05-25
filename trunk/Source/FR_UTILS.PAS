@@ -86,7 +86,7 @@ begin
     repeat
       Stream.Read(n, 2);
       SetLength(s, n);
-      Stream.Read(s[1], n);
+      Stream.Read(Pointer(s)^, n * sizeof(char));
       l.Add(s);
       Stream.Read(b, 1);
     until b = 0
@@ -106,7 +106,7 @@ begin
     repeat
       Stream.Read(n, 2);
       SetLength(s, n);
-      Stream.Read(s[1], n);
+      Stream.Read(Pointer(s)^, n);
       l.Add(s);
       Stream.Read(b, 1);
     until b = 0
@@ -128,7 +128,7 @@ begin
     s := l[i];
     n := Length(s);
     Stream.Write(n, 2);
-    Stream.Write(s[1], n);
+    Stream.Write(Pointer(s)^, n * sizeof(char));
     b := 13;
     if i <> l.Count - 1 then Stream.Write(b, 1);
   end;
@@ -144,7 +144,7 @@ var
 begin
   Stream.Read(n, 2);
   SetLength(s, n);
-  Stream.Read(s[1], n);
+  Stream.Read(Pointer(s)^, n * sizeof(char));
   Stream.Read(b, 1);
   Result := s;
 end;
@@ -157,7 +157,7 @@ var
 begin
   Stream.Read(n, 2);
   SetLength(s, n);
-  Stream.Read(s[1], n);
+  Stream.Read(Pointer(s)^, n);
   Stream.Read(b, 1);
   Result := s;
 end;
@@ -169,7 +169,7 @@ var
 begin
   n := Length(s);
   Stream.Write(n, 2);
-  Stream.Write(s[1], n);
+  Stream.Write(Pointer(s)^, n * sizeof(char));
   b := 0;
   Stream.Write(b, 1);
 end;
@@ -421,7 +421,7 @@ const
 
   procedure WriteStr(const s: String);
   begin
-    Stream.Write(s[1], Length(s));
+    Stream.Write(Pointer(s)^, Length(s) * sizeof(char));
   end;
 
   procedure WriteLn(const s: String);

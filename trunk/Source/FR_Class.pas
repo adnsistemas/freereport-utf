@@ -837,7 +837,7 @@ begin
             break;
           end;
         if Result = nil then
-          raise EClassNotFound.Create('Не найден класс ' + ClassName);
+          raise EClassNotFound.Create('Class not found: ' + ClassName);
       end;
   end;
   if Result <> nil then
