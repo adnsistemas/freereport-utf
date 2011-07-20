@@ -224,7 +224,8 @@ begin
     LowDy := 0;
     HighDY := 1000000;
 
-    MaxLen := SRichEdit.GetTextLen - 2;//2 is #D#A added to avoid eating of last char
+    MaxLen := SRichEdit.GetTextLen;
+    Dec(MaxLen,2);//2 is #D#A added to avoid eating of last char
     while HighDy - LowDy > 8 do //no tiene ningún sentido seguir si ya pasé el mínimo
     begin
       NewDY := (LowDy + HighDy) div 2;//LowDy + (HighDy - LowDy) div 2;
