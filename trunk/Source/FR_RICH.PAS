@@ -224,7 +224,21 @@ begin
     LowDy := 0;
     HighDY := 1000000;
 
-    MaxLen := SRichEdit.GetTextLen;
+    rc := Rect(0, 0, Round(DX * 1440 / LogX), Round(HighDY * 1440.0 / LogY));
+    rcPage := rc;
+    chrg.cpMax := -1;
+    chrg.cpMin := 0;
+    MaxLen := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
+    if MaxLen < SRichEdit.GetTextLen - 2 then begin
+      //for some reason in some cases the last index is not properly returned
+      rc := Rect(0, 0, Round(DX * 1440 / LogX), Round((HighDY div 4)* 3 * 1440.0 / LogY));
+      rcPage := rc;
+      NewDY := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
+      if NewDY <> MaxLen then
+        MaxLen := SRichEdit.GetTextLen
+      else
+        Inc(MaxLen,2);
+    end;
     Dec(MaxLen,2);//2 is #D#A added to avoid eating of last char
     while HighDy - LowDy > 8 do //no tiene ningún sentido seguir si ya pasé el mínimo
     begin
