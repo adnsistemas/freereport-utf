@@ -141,7 +141,7 @@ type
         protected
           { Protected-Deklarationen }
                 function MakeData : string;
-
+                function forceLen(data:string;len:integer):string;
         public
           { Public-Deklarationen }
                 constructor Create(Owner:TComponent); override;
@@ -458,7 +458,7 @@ begin
                           tmp := getEAN(copy(tmp,length(tmp)-6,7)+'0');
            end
         else
-           tmp := Ftext;
+           tmp := forceLen(Ftext,8);
 
         result := '505';   // Startcode
 
@@ -523,7 +523,7 @@ begin
                 tmp := getEAN(copy(tmp,length(tmp)-11,12)+'0');
         end
         else
-                tmp := Ftext;
+                tmp := forceLen(Ftext,13);
 
         LK := StrToInt(tmp[1]);
         tmp := copy(tmp,2,12);
@@ -1524,6 +1524,13 @@ begin
 end;
 
 
+
+function TBarcode.forceLen(data: string; len: integer): string;
+begin
+  result := data;
+  while Length(result) < len do
+    result := '0' + result;
+end;
 
 {  Removed by TZ
 procedure Register;

@@ -4439,7 +4439,7 @@ begin
   end;
 
   if ColCount = 0 then ColCount := 1;
-  ColWidth := (RightMargin - LeftMargin) div ColCount;
+  ColWidth := ((RightMargin - LeftMargin) div ColCount) - ColGap;
 end;
 
 procedure TfrPage.PrepareObjects;
