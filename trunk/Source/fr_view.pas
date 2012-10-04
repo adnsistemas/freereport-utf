@@ -153,6 +153,9 @@ type
     procedure frTBButton1MouseEnter(Sender: TObject);
     procedure frTBButton1MouseLeave(Sender: TObject);
     procedure frTBButton1Click(Sender: TObject);
+    procedure RPanelResize(Sender: TObject);
+    procedure FormConstrainedResize(Sender: TObject; var MinWidth, MinHeight,
+      MaxWidth, MaxHeight: Integer);
   private
     { Private declarations }
     Doc: Pointer;
@@ -523,6 +526,12 @@ begin
   Action := caFree;
 end;
 
+procedure TfrPreviewForm.FormConstrainedResize(Sender: TObject; var MinWidth,
+  MinHeight, MaxWidth, MaxHeight: Integer);
+begin
+  FormResize(Sender);
+end;
+
 procedure TfrPreviewForm.FormActivate(Sender: TObject);
 begin
   Application.HelpFile := 'FRuser.hlp';
@@ -661,11 +670,22 @@ begin
   PBox.Repaint;
 end;
 
+procedure TfrPreviewForm.RPanelResize(Sender: TObject);
+begin
+  PgDown.Top := RPanel.Height - 16;
+  PgUp.Top := PgDown.Top - 16;
+  VScrollBar.Height := PgUp.Top - 1;
+  if RPanel.Visible then
+    HScrollBar.Width := BPanel.Width - HScrollBar.Left - VScrollBar.Width else
+    HScrollBar.Width := BPanel.Width - HScrollBar.Left;
+end;
+
 procedure TfrPreviewForm.FormResize(Sender: TObject);
 var
   i, j, y, d, nx, dwx, dwy, maxx, maxy, maxdy, curx: Integer;
   Pages: TfrEMFPages;
 begin
+  RPanelResize(Sender);
   if EMFPages = nil then Exit;
   Pages := TfrEMFPages(EMFPages);
   PaintAllowed := False;
@@ -729,12 +749,6 @@ begin
     Inc(y, maxdy + 10);
     Inc(i, nx);
   end;
-  PgDown.Top := RPanel.Height - 16;
-  PgUp.Top := PgDown.Top - 16;
-  VScrollBar.Height := PgUp.Top - 1;
-  if RPanel.Visible then
-    HScrollBar.Width := BPanel.Width - HScrollBar.Left - VScrollBar.Width else
-    HScrollBar.Width := BPanel.Width - HScrollBar.Left;
   maxx := maxx - PBox.Width;
   maxy := maxy - PBox.Height;
   if maxx < 0 then maxx := 0 else Inc(maxx, 10);
