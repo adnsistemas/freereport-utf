@@ -61,7 +61,7 @@ implementation
 {$ENDIF}
 
 type
-  TCharArray = Array[0..31999] of Char;
+  TCharArray = Array[0..31999] of WideChar;
   PCharArray = ^TCharArray;
   lrec = record
     name: String[16];
@@ -254,7 +254,7 @@ procedure DoFuncId; forward;
   function CopyArr(cur, n: Integer): String;
   begin
     SetLength(Result, n);
-    Move(buf^[cur], Result[1], n);
+    Move(buf^[cur], Result[1], n * sizeof(char));
   end;
 
   procedure AddLabel(s: String; n: Integer);
@@ -285,7 +285,7 @@ procedure DoFuncId; forward;
     SkipSpace;
     j := cur; Inc(cur);
     while (buf^[cur] > ' ') and (cur < len) do Inc(cur);
-    Result := AnsiUpperCase(CopyArr(j, cur - j));
+    Result := UpperCase(CopyArr(j, cur - j));
   end;
 
   procedure AddError(s: String);
@@ -726,8 +726,8 @@ procedure DoFuncId; forward;
 
 begin
   Error := False;
-  GetMem(buf, 32000);
-  FillChar(buf^, 32000, 0);
+  GetMem(buf, 32000 * sizeof(PWideChar));
+  FillChar(buf^, 32000 * sizeof(PWideChar), 0);
   len := 0;
   for i := 0 to MemoFrom.Count - 1 do
   begin
@@ -738,7 +738,7 @@ begin
       s[Pos(#9, s)] := ' ';
     while Pos('  ', s) <> 0 do
       Delete(s, Pos('  ', s), 1);
-    Move(s[1], buf^[len], Length(s));
+    Move(s[1], buf^[len], Length(s) * sizeof(char));
     Inc(len, Length(s));
   end;
   cur := 0; labc := 0;
