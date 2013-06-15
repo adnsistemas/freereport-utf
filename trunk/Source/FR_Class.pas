@@ -6106,8 +6106,10 @@ begin
   CurReport := Self;
   HF := Application.HelpFile;
   Application.HelpFile := 'FRuser.hlp';
-  if frDesigner <> nil then
+  if frDesigner <> nil then begin
+    frDesigner.PopUpParent := screen.ActiveCustomForm;
     frDesigner.ShowModal;
+  end;
   Application.HelpFile := HF;
 end;
 
