@@ -535,6 +535,7 @@ end;
 procedure TfrPreviewForm.FormActivate(Sender: TObject);
 begin
   Application.HelpFile := 'FRuser.hlp';
+  RPanelResize(RPanel);
 end;
 
 procedure TfrPreviewForm.FormDeactivate(Sender: TObject);

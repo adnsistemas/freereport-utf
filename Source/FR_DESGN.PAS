@@ -22,7 +22,7 @@ uses
 {$IFDEF SYNTMEMO}
 ,  FR_SntxE
 {$ELSE}
-,  FR_Edit
+,  FR_Edit{$IFNDEF Delphi4}, ImgList{$ENDIF}
 {$ENDIF};
 
 
@@ -1056,6 +1056,7 @@ var
     s: String;
   begin
     frBandTypesForm := TfrBandTypesForm.Create(nil);
+    frBandTypesForm.PopUpParent := frDesigner;
     ObjectInserted := frBandTypesForm.ShowModal = mrOk;
     if ObjectInserted then
     begin
@@ -1740,7 +1741,9 @@ begin
   end;
 
   InspForm := TfrInspForm.Create(nil);
+  InspForm.PopUpParent := Self;
   EditorForm := TfrEditorForm.Create(nil);
+  EditorForm.PopUpParent := Self;
   with InspForm do
   begin
     ClearItems;
@@ -2846,6 +2849,7 @@ var
 begin
   t := Objects[TopSelected];
   frHilightForm := TfrHilightForm.Create(nil);
+  frHilightForm.PopUpParent := Self;
   with frHilightForm do
   begin
     FontColor := t.Highlight.FontColor;
@@ -3116,6 +3120,7 @@ begin
   else if t.Typ = gtPicture then
   begin
     frGEditorForm := TfrGEditorForm.Create(nil);
+    frGEditorForm.PopUpParent := Self;
     with frGEditorForm do
     begin
       Image1.Picture.Assign((t as TfrPictureView).Picture);
@@ -3136,18 +3141,21 @@ begin
     if bt in [btMasterData, btDetailData, btSubDetailData] then
     begin
       frBandEditorForm := TfrBandEditorForm.Create(nil);
+      frBandEditorForm.PopUpParent := Self;
       frBandEditorForm.ShowEditor(t);
       frBandEditorForm.Free;
     end
     else if bt = btGroupHeader then
     begin
       frGroupEditorForm := TfrGroupEditorForm.Create(nil);
+      frGroupEditorForm.PopUpParent := Self;
       frGroupEditorForm.ShowEditor(t);
       frGroupEditorForm.Free;
     end
     else if bt = btCrossData then
     begin
       frVBandEditorForm := TfrVBandEditorForm.Create(nil);
+      frVBandEditorForm.PopUpParent := Self;
       frVBandEditorForm.ShowEditor(t);
       frVBandEditorForm.Free;
     end
@@ -3581,6 +3589,7 @@ end;
 procedure TfrDesignerForm.N23Click(Sender: TObject); // create new from template
 begin
   frTemplForm := TfrTemplForm.Create(nil);
+  frTemplForm.PopUpParent := Self;
   with frTemplForm do
   if ShowModal = mrOk then
   begin
@@ -3651,6 +3660,7 @@ begin
         if frTemplateDir <> '' then
           s := frTemplateDir + '\' + s;
         frTemplNewForm := TfrTemplNewForm.Create(nil);
+        frTemplNewForm.PopUpParent := Self;
         with frTemplNewForm do
         if ShowModal = mrOk then
         begin
@@ -3708,6 +3718,7 @@ var
   w, h, p: Integer;
 begin
   frPgoptForm := TfrPgoptForm.Create(nil);
+  frPgoptForm.PopUpParent := Self;
   with frPgoptForm, Page do
   begin
     CB1.Checked := PrintToPrevPage;
@@ -3772,6 +3783,7 @@ end;
 procedure TfrDesignerForm.N8Click(Sender: TObject); // report setup
 begin
   frDocOptForm := TfrDocOptForm.Create(nil);
+  frDocOptForm.PopUpParent := Self;
   with frDocOptForm do
   begin
     CB1.Checked := not CurReport.PrintToDefault;
@@ -3794,6 +3806,7 @@ var
   DesOptionsForm: TfrDesOptionsForm;
 begin
   DesOptionsForm := TfrDesOptionsForm.Create(nil);
+  DesOptionsForm.PopUpParent := Self;
   with DesOptionsForm do
   begin
     CB1.Checked := ShowGrid;
@@ -3960,6 +3973,7 @@ end;
 procedure TfrDesignerForm.N34Click(Sender: TObject);
 begin // about box
   frAboutForm := TfrAboutForm.Create(nil);
+  frAboutForm.PopUpParent := Self;
   frAboutForm.ShowModal;
   frAboutForm.Free;
 end;
@@ -4022,6 +4036,7 @@ begin
   HeaderL := TList.Create;
   DataL := TList.Create;
   frInsertFieldsForm := TfrInsertFieldsForm.Create(nil);
+  frInsertFieldsForm.PopUpParent := Self;
   with frInsertFieldsForm do
   begin
     if (ShowModal = mrOk) and (DataSet <> nil) and
