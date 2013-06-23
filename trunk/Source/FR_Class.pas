@@ -3457,6 +3457,16 @@ begin
       begin
         t := Objects[i];
         Page := CurReport.Pages[(t as TfrSubReportView).SubPage];
+
+        // in PageFoother band need to update Parent.Y coordinates
+        // according t.y
+        if Typ = btPageFooter then
+        begin
+          Parent.CurY := Parent.Bands[btPageFooter].y + t.y;
+          Parent.CurBottomY := Parent.Bands[btPageFooter].y +
+                               Parent.Bands[btPageFooter].dy;
+        end;
+
         Page.CurY := Parent.CurY;
         Page.CurBottomY := Parent.CurBottomY;
       end;
@@ -3483,7 +3493,8 @@ begin
         Exit;
       end
       else
-        Parent.NewPage;
+        if Typ <> btPageFooter then // No NewPage if in PageFooter band
+          Parent.NewPage;
     end;
   until EOFReached or MasterReport.Terminated;
   for i := SubIndex to Objects.Count - 1 do
