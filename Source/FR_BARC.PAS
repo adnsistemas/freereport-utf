@@ -448,6 +448,6 @@ initialization
     LoadStr(SInsBarcode), frBarCodeForm);
 
 finalization
-  frBarCodeForm.Free;
+  FreeAndNil(frBarCodeForm);
 
 end.

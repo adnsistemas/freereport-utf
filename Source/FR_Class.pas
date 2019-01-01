@@ -2956,13 +2956,30 @@ begin
       else
       begin
         r := DRect;
-        if (Flags and flPictCenter) <> 0 then
-        begin
-          w := DRect.Right - DRect.Left;
-          h := DRect.Bottom - DRect.Top;
-          OffsetRect(r, (w - Picture.Width) div 2, (h - Picture.Height) div 2);
+        if (DocMode = dmDesigning) then begin
+          w := GetDeviceCaps(Printer.Handle,LOGPIXELSX);
+          h := GetDeviceCaps(Printer.Handle,LOGPIXELSY);
+          if h < w then
+            w := h;
+          h := screen.PixelsPerInch;
+          r.Right := r.Left + Round((Picture.Graphic.Width / w) * h);
+          r.Bottom := r.Top + Round((Picture.Graphic.Height / w) * h);
+          if (Flags and flPictCenter) <> 0 then
+          begin
+            w := DRect.Right - DRect.Left;
+            h := DRect.Bottom - DRect.Top;
+            OffsetRect(r, (w - (r.Right - r.Left)) div 2, (h - (r.Bottom - r.Top)) div 2);
+          end;
+          StretchDraw(r,Picture.Graphic);
+        end else begin
+          if (Flags and flPictCenter) <> 0 then
+          begin
+            w := DRect.Right - DRect.Left;
+            h := DRect.Bottom - DRect.Top;
+            OffsetRect(r, (w - Picture.Width) div 2, (h - Picture.Height) div 2);
+          end;
+          Draw(r.Left, r.Top, Picture.Graphic)
         end;
-        Draw(r.Left, r.Top, Picture.Graphic)
       end;
     end;
     ShowFrame;
@@ -3876,8 +3893,10 @@ begin
     Result := 0;
     repeat
       Result := Result + b.CalcHeight;
-      b := b.Next;
-    until b = nil;
+      repeat
+        b := b.Next;
+      until (b = nil) or b.Visible or (b.DataSet <> nil);
+    until (b = nil) or (b.DataSet <> nil);
   end
   else
   begin
@@ -3936,8 +3955,10 @@ begin
         b := Self;
         repeat
           b.DoDraw;
-          b := b.Next;
-        until b = nil;
+          repeat
+            b := b.Next;
+          until (b = nil) or b.Visible or (b.DataSet <> nil);
+        until (b = nil) or (b.DataSet <> nil);
       end
       else
       begin
@@ -4891,7 +4912,7 @@ end;
 
 function TfrPage.BandExists(b: TfrBand): Boolean;
 begin
-  Result := b.Objects.Count > 0;
+  Result := Assigned(b) and (b.Objects.Count > 0);
 end;
 
 procedure TfrPage.AfterPrint;
@@ -6563,9 +6584,12 @@ function TfrReport.ChangePrinter(OldIndex, NewIndex: Integer): Boolean;
       with Pages[i] do
         ChangePaper(pgSize, pgWidth, pgHeight, pgOr);
   end;
+var
+  prevPrinter:string;
 begin
   Result := True;
   try
+    prevPrinter := Prn.Printers[OldIndex];
     Prn.PrinterIndex := NewIndex;
     Prn.PaperSize := -1;
     ChangePages;
@@ -6574,8 +6598,15 @@ begin
     begin
       MessageBox(0, PChar(LoadStr(SPrinterError)),
         PChar(LoadStr(SError)), mb_IconError + mb_Ok);
-      Prn.PrinterIndex := OldIndex;
-      ChangePages;
+      if Prn.Printers[OldIndex] <> prevPrinter then begin
+        OldIndex := Prn.Printers.IndexOf(prevPrinter);
+        OldIndex := 0;
+      end;
+      try
+        Prn.PrinterIndex := OldIndex;
+        ChangePages;
+      except
+      end;
       Result := False;
     end;
   end;

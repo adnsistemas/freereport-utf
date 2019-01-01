@@ -35,6 +35,7 @@ type
     procedure SetSettings;
     procedure SetPrinter(Value: TPrinter);
     procedure SetPrinterIndex(Value: Integer);
+    function getPrinter: TPrinter;
   public
     Orientation: TPrinterOrientation;
     PaperSize: Integer;
@@ -51,7 +52,7 @@ type
       pgOr: TPrinterOrientation): Boolean;
     function GetArrayPos(pgSize: Integer): Integer;
     property PaperNames: TStringList read FPaperNames;
-    property Printer: TPrinter read FPrinter write SetPrinter;
+    property Printer: TPrinter read getPrinter write SetPrinter;
     property Printers: TStringList read FPrinters;
     property PrinterIndex: Integer read FPrinterIndex write SetPrinterIndex;
   end;
@@ -175,15 +176,15 @@ var
   PaperNames: PChar;
   Size: TPoint;
 begin
-  FPrinter.GetPrinter(FDevice, FDriver, FPort, FDeviceMode);
+  Self.Printer.GetPrinter(FDevice, FDriver, FPort, FDeviceMode);
   try
     FMode := GlobalLock(FDeviceMode);
 
     PaperSize := FMode.dmPaperSize;
 
-    Escape(FPrinter.Handle, GetPhysPageSize, 0, nil, @Size);
-    PaperWidth := Round(Size.X / GetDeviceCaps(FPrinter.Handle, LOGPIXELSX) * 254);
-    PaperHeight := Round(Size.Y / GetDeviceCaps(FPrinter.Handle, LOGPIXELSY) * 254);
+    Escape(Self.Printer.Handle, GetPhysPageSize, 0, nil, @Size);
+    PaperWidth := Round(Size.X / GetDeviceCaps(Self.Printer.Handle, LOGPIXELSX) * 254);
+    PaperHeight := Round(Size.Y / GetDeviceCaps(Self.Printer.Handle, LOGPIXELSY) * 254);
 
     FillChar(PaperSizes, SizeOf(PaperSizes), 0);
     PaperSizesNum := DeviceCapabilities(FDevice, FPort, DC_PAPERS, @PaperSizes, FMode);
@@ -224,7 +225,7 @@ begin
     Exit;
   end;
 
-  FPrinter.GetPrinter(FDevice, FDriver, FPort, FDeviceMode);
+  Self.Printer.GetPrinter(FDevice, FDriver, FPort, FDeviceMode);
   try
     FMode := GlobalLock(FDeviceMode);
     if PaperSize = $100 then
@@ -245,7 +246,7 @@ begin
     if (FMode.dmFields and DM_COPIES) <> 0 then
       FMode.dmCopies := 1;
 
-    FPrinter.SetPrinter(FDevice, FDriver, FPort, FDeviceMode);
+    Self.Printer.SetPrinter(FDevice, FDriver, FPort, FDeviceMode);
   finally
     GlobalUnlock(FDeviceMode);
   end;
@@ -269,7 +270,7 @@ begin
       Ph := Pgh - Ofy * 2;
     end
   else
-    with p, FPrinter do
+    with p, Self.Printer do
     begin
       kx := kx / GetDeviceCaps(Handle, LOGPIXELSX);
       ky := ky / GetDeviceCaps(Handle, LOGPIXELSY);
@@ -316,14 +317,33 @@ begin
     end;
 end;
 
+{
+Due to the way this unit has been built there are
+several naming conflicts with "global" elements in
+the Printers unit, including Printers, so this function
+is necesary to get to the global Printer() function,
+in getPrinter getter.
+}
+function globalPrinter:TPrinter;
+begin
+  result := Printer;
+end;
+
+function TfrPrinter.getPrinter: TPrinter;
+begin
+  if not Assigned(FPrinter) then
+    FPrinter := globalPrinter;
+  result := FPrinter;
+end;
+
 procedure TfrPrinter.SetPrinterIndex(Value: Integer);
 begin
   FPrinterIndex := Value;
   if Value = FDefaultPrinter then
     SetSettings
-  else if FPrinter.Printers.Count > 0 then
+  else if Self.Printer.Printers.Count > 0 then
   begin
-    FPrinter.PrinterIndex := Value;
+    Self.Printer.PrinterIndex := Value;
     GetSettings;
   end;
 end;
@@ -333,10 +353,10 @@ begin
   FPrinters.Clear;
   FPrinterIndex := 0;
   FPrinter := Value;
-  if FPrinter.Printers.Count > 0 then
+  if Value.Printers.Count > 0 then
   begin
     FPrinters.Assign(FPrinter.Printers);
-    FPrinterIndex := FPrinter.PrinterIndex;
+    FPrinterIndex := Value.PrinterIndex;
     GetSettings;
   end;
   FPrinters.Add(LoadStr(SDefaultPrinter));
@@ -348,7 +368,6 @@ end;
 
 initialization
   Prn := TfrPrinter.Create;
-  Prn.Printer := Printer;
 
 finalization
   Prn.Free;
