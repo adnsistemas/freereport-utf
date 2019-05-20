@@ -5086,7 +5086,10 @@ begin
   end;
   Stream.Write(Parent.PrintToDefault, 2);
   Stream.Write(Parent.DoublePass, 2);
-  frWriteString(Stream, Prn.Printers[Prn.PrinterIndex]);
+  if (Prn.PrinterIndex >= 0) and (Prn.PrinterIndex < Prn.Printers.Count) then
+    frWriteString(Stream, Prn.Printers[Prn.PrinterIndex])
+  else
+    frWriteString(Stream,'');
   for i := 0 to Count - 1 do // adding pages at first
   begin
     b := $FF;
@@ -5424,7 +5427,10 @@ var
 begin
   b := Byte(frCompressor.Enabled);
   AStream.Write(b, 1);
-  frWriteString(AStream, Prn.Printers[Prn.PrinterIndex]);
+  if (Prn.PrinterIndex >= 0) and (Prn.PrinterIndex < Prn.Printers.Count) then
+    frWriteString(AStream, Prn.Printers[Prn.PrinterIndex])
+  else
+    frWriteString(AStream, '');
   n := Count;
   AStream.Write(n, 4);
   i := 0;
