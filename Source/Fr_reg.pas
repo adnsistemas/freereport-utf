@@ -29,7 +29,7 @@ uses
   Dialogs, FR_Class, FR_DSet, FR_DBSet,
   FR_OLE, FR_Rich, FR_ChBox, FR_Shape, FR_BarC, FR_RRect,
   FR_Desgn, FR_View, FR_Dock, FR_Ctrls, FR_DBOp,
-  FR_E_TXT, FR_E_RTF, FR_E_CSV, FR_E_HTM, FR_Const
+  FR_E_TXT, FR_E_RTF, FR_E_CSV, FR_E_HTM, FR_Const,fr_e_pdf
   {$IFDEF TeeChart}, FR_Chart {$ENDIF}
   {$IFDEF RX}, FR_RxRTF {$ENDIF};
 
@@ -75,7 +75,7 @@ begin
      {$IFDEF TeeChart} TfrChartObject, {$ENDIF}
      {$IFDEF RX} TfrRxRichObject, {$ENDIF}
      TfrRoundRectObject,
-     TfrTextExport, TfrRTFExport, TfrCSVExport, TfrHTMExport,
+     TfrTextExport, TfrRTFExport, TfrCSVExport, TfrHTMExport,TfrPDFExport,
      TfrDesigner,
      TfrPreview]);
   RegisterComponents('FR Tools',

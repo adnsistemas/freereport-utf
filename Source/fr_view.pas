@@ -21,7 +21,7 @@ uses
 type
   TfrPreviewForm = class;
   TfrPreviewZoom = (pzDefault, pzPageWidth, pzOnePage, pzTwoPages);
-  TfrPreviewButton = (pbZoom, pbLoad, pbSave, pbPrint, pbFind, pbHelp, pbExit);
+  TfrPreviewButton = (pbZoom, pbLoad, pbSave, pbPrint, pbFind, pbHelp, pbExit, pbPDF);
   TfrPreviewButtons = set of TfrPreviewButton;
 
   TfrPreview = class(TPanel)
@@ -49,6 +49,7 @@ type
     procedure SaveToFile;
     procedure LoadFromFile;
     procedure Print;
+    procedure ToPDF;
     procedure Edit;
     procedure Find;
     property AllPages: Integer read GetAllPages;
@@ -121,6 +122,7 @@ type
     ExitBtn: TfrTBButton;
     frTBSeparator4: TfrTBSeparator;
     frTBButton1: TfrTBButton;
+    PDFBtn: TfrTBButton;
     procedure FormMouseWheelUp(Sender: TObject; Shift: TShiftState;
       MousePos: TPoint; var Handled: Boolean);
     procedure FormMouseWheelDown(Sender: TObject; Shift: TShiftState;
@@ -156,6 +158,7 @@ type
     procedure RPanelResize(Sender: TObject);
     procedure FormConstrainedResize(Sender: TObject; var MinWidth, MinHeight,
       MaxWidth, MaxHeight: Integer);
+    procedure PDFBtnClick(Sender: TObject);
   private
     { Private declarations }
     Doc: Pointer;
@@ -290,6 +293,11 @@ begin
   FWindow.Mode := mdOnePage;
   FWindow.FormResize(nil);
   FWindow.PBox.Paint;
+end;
+
+procedure TfrPreview.ToPDF;
+begin
+  FWindow.PDFBtnClick(nil);
 end;
 
 procedure TfrPreview.TwoPages;
@@ -506,6 +514,7 @@ begin
   LoadBtn.Hint := LoadStr(frRes + 025);
   SaveBtn.Hint := LoadStr(frRes + 026);
   PrintBtn.Hint := LoadStr(frRes + 027);
+  PDFBtn.Hint := LoadStr(SPrintToPDFHint);
   FindBtn.Hint := LoadStr(frRes + 028);
   HelpBtn.Hint := LoadStr(frRes + 032);
   ExitBtn.Hint := LoadStr(frRes + 023);
@@ -556,6 +565,7 @@ begin
     LoadBtn.Visible := pbLoad in TfrReport(Doc).PreviewButtons;
     SaveBtn.Visible := pbSave in TfrReport(Doc).PreviewButtons;
     PrintBtn.Visible := pbPrint in TfrReport(Doc).PreviewButtons;
+    PDFBtn.Visible := pbPDF in TfrReport(Doc).PreviewButtons;
     FindBtn.Visible := pbFind in TfrReport(Doc).PreviewButtons;
     HelpBtn.Visible := pbHelp in TfrReport(Doc).PreviewButtons;
     ExitBtn.Visible := pbExit in TfrReport(Doc).PreviewButtons;
@@ -858,6 +868,7 @@ begin
     if Chr(Key) = 'O' then LoadBtnClick(nil)
     else if Chr(Key) = 'S' then SaveBtnClick(nil)
     else if (Chr(Key) = 'P') and PrintBtn.Enabled then PrintBtnClick(nil)
+    else if (Chr(Key) = 'D') then PDFBtnClick(nil)
     else if Chr(Key) = 'F' then FindBtnClick(nil)
     else if (Chr(Key) = 'E') and N5.Visible then EditBtnClick(nil)
   end
@@ -886,6 +897,43 @@ begin
   if CurPage > 1 then Dec(CurPage);
   ShowPageNum;
   SetToCurPage;
+end;
+
+procedure TfrPreviewForm.PDFBtnClick(Sender: TObject);
+var
+  Pages,filename,copia: String;
+  c,total: Integer;
+begin
+  if (EMFPages = nil) then Exit;
+  frPrintForm := TfrPrintForm.Create(nil);
+  with frPrintForm do
+  begin
+    SelPathInsteadOfPrinter := True;
+    if ShowModal = mrOk then
+    begin
+      if RB1.Checked then
+        Pages := ''
+      else if RB2.Checked then
+        Pages := IntToStr(CurPage)
+      else
+        Pages := E2.Text;
+      ConnectBack;
+      filename := EDPDF.Text;
+      if Pos('.',filename) > 0 then
+        filename := Copy(filename,1,Pos('.',filename) - 1);
+      total := StrToInt(E1.Text);
+      if total <= 0 then
+        total := 1;
+      copia := '';
+      for c := 1 to total do begin
+        TfrReport(Doc).ExportToPDF(Pages,filename + copia + '.pdf');
+        copia := ' (Copia ' + IntToStr(c) + ')';
+      end;
+      Connect(Doc);
+      RedrawAll;
+    end;
+    Free;
+  end;
 end;
 
 procedure TfrPreviewForm.PgDownClick(Sender: TObject);

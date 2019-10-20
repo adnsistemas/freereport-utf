@@ -263,6 +263,10 @@ const
   SFRFError = frRes + 2345;
   SFieldSizeError = frRes + 2346;
   SForm3File = frRes + 2347;
+  SPrintToPDFHint = frRes + 2348;
+  SChoosePDFFile = frRes + 2349;
+  SDestination = frRes + 2350;
+  SAcceptPDFDialog = frRes + 2351;
 
 implementation
 

@@ -127,7 +127,7 @@ type
 
 implementation
 
-uses FR_Var, FR_Pars, FR_Intrp, FR_Utils, FR_Const, Printers;
+uses FR_Var, FR_Pars, FR_Intrp, FR_Utils, FR_Const, FR_Prntr;
 
 const
   RulerAdj = 4/3;
@@ -240,24 +240,29 @@ begin
         Inc(MaxLen,2);
     end;
     Dec(MaxLen,2);//2 is #D#A added to avoid eating of last char
-    while HighDy - LowDy > 8 do //no tiene ningún sentido seguir si ya pasé el mínimo
-    begin
-      NewDY := (LowDy + HighDy) div 2;//LowDy + (HighDy - LowDy) div 2;
-      rc := Rect(0, 0, Round(DX * 1440 / LogX), Round(NewDY * 1440.0 / LogY));
-      rcPage := rc;
-      LastChar := CharFrom;
-      chrg.cpMax := -1;
-      repeat
-        chrg.cpMin := LastChar;
-        LastChar := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
-        Fit := (LastChar >= MaxLen) or (LastChar = -1) or (LastChar = 0);
-        StopRender := ((LastChar < MaxLen) and (LastChar <> -1)) or Fit;
-      until StopRender;
+    if CharFrom < MaxLen - 1 then begin
+      while HighDy - LowDy > 8 do //no tiene ningún sentido seguir si ya pasé el mínimo
+      begin
+        NewDY := (LowDy + HighDy) div 2;//LowDy + (HighDy - LowDy) div 2;
+        rc := Rect(0, 0, Round(DX * 1440 / LogX), Round(NewDY * 1440.0 / LogY));
+        rcPage := rc;
+        LastChar := CharFrom;
+        chrg.cpMax := -1;
+        repeat
+          chrg.cpMin := LastChar;
+          LastChar := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
+          Fit := (LastChar >= MaxLen) or (LastChar = -1) or (LastChar = 0);
+          StopRender := ((LastChar < MaxLen) and (LastChar <> -1)) or Fit;
+        until StopRender;
 
-      if Fit then
-        HighDy := NewDY else
-        LowDy := NewDY;
-    end;
+        if Fit then
+          HighDy := NewDY else
+          LowDy := NewDY;
+      end;
+    end else if CharFrom < MaxLen then
+      HighDy := MinHeight
+    else
+      HighDy := 0;
     ReleaseDC(0, hdc);
   end;
   SRichEdit.Perform(EM_FORMATRANGE, 0, 0);
@@ -292,8 +297,8 @@ begin
     if Render then
       if IsPrinting then
       begin
-        LogX := GetDeviceCaps(Printer.Canvas.Handle, LOGPIXELSX);
-        LogY := GetDeviceCaps(Printer.Canvas.Handle, LOGPIXELSY);
+        LogX := Prn.LogPixelsOnX;
+        LogY := Prn.LogPixelsOnY;
         rc := Rect(DRect.Left * 1440 div LogX, DRect.Top * 1440 div LogY,
                    DRect.Right * 1440 div LogX, DRect.Bottom * 1440 div LogY);
       end

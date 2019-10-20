@@ -38,6 +38,10 @@ type
     PropButton: TButton;
     PrinterSetupDialog1: TPrinterSetupDialog;
     Image1: TImage;
+    FileSaveDialog1: TFileSaveDialog;
+    GroupBox3: TGroupBox;
+    EDPDF: TEdit;
+    Button3: TButton;
     procedure CB1DrawItem(Control: TWinControl; Index: Integer;
       ARect: TRect; State: TOwnerDrawState);
     procedure FormCreate(Sender: TObject);
@@ -48,11 +52,15 @@ type
     procedure frSpeedButton2Click(Sender: TObject);
     procedure RB3Click(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
   private
     { Private declarations }
     OldIndex: Integer;
+    function getNoPrinterSel: boolean;
+    procedure setNoPrinterSel(const Value: boolean);
   public
     { Public declarations }
+    property SelPathInsteadOfPrinter:boolean read getNoPrinterSel write setNoPrinterSel;
   end;
 
 var
@@ -81,6 +89,11 @@ begin
   Label2.Caption := LoadStr(frRes + 048);
   Button1.Caption := LoadStr(SOk);
   Button2.Caption := LoadStr(SCancel);
+  GroupBox3.Caption := LoadStr(SDestination);
+  if GroupBox3.Caption = '' then
+    GroupBox3.Caption := 'Destino';
+  FileSaveDialog1.Title := LoadStr(SChoosePDFFile);
+  FileSaveDialog1.OkButtonLabel := LoadStr(SAcceptPDFDialog);
 end;
 
 procedure TfrPrintForm.FormDeactivate(Sender: TObject);
@@ -112,6 +125,12 @@ begin
   CB1.ItemIndex := Printer.PrinterIndex;
 end;
 
+procedure TfrPrintForm.Button3Click(Sender: TObject);
+begin
+  if FileSaveDialog1.Execute then
+    EDPDF.Text := FileSaveDialog1.FileName;
+end;
+
 procedure TfrPrintForm.CB1Click(Sender: TObject);
 begin
   Prn.PrinterIndex := CB1.ItemIndex;
@@ -141,9 +160,20 @@ begin
   E1.Text := IntToStr(i);
 end;
 
+function TfrPrintForm.getNoPrinterSel: boolean;
+begin
+  result := GroupBox1.Visible;
+end;
+
 procedure TfrPrintForm.RB3Click(Sender: TObject);
 begin
   E2.SetFocus;
+end;
+
+procedure TfrPrintForm.setNoPrinterSel(const Value: boolean);
+begin
+  GroupBox1.Visible := not Value;
+  GroupBox3.Visible := Value;
 end;
 
 end.

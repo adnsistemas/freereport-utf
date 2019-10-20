@@ -572,6 +572,7 @@ type
     procedure ShowReport;
     procedure ShowPreparedReport;
     procedure PrintPreparedReport(PageNumbers: String; Copies: Integer);
+    procedure ExportToPDF(PageNumbers: String; FileName: string);
     function ChangePrinter(OldIndex, NewIndex: Integer): Boolean;
     procedure EditPreparedReport(PageIndex: Integer);
     //
@@ -771,7 +772,7 @@ var
 implementation
 
 uses
-  FR_Fmted, FR_Prntr, FR_Progr, FR_Utils, FR_Const
+  FR_Fmted, FR_Prntr, FR_Progr, FR_Utils, FR_Const, fr_e_pdf
   {$IFDEF JPEG}, JPEG {$ENDIF};
 
 {$R FR_Lng1.RES}
@@ -4152,6 +4153,8 @@ begin
   TossObjects;
   InitFlag := True;
   CurPos := 1; ColPos := 1;
+  CurBottomY := 0;
+  CurY := 0;
 end;
 
 procedure TfrPage.DoneReport;
@@ -5162,7 +5165,7 @@ var
   v, IsPrinting: Boolean;
   h: THandle;
 begin
-  IsPrinting := Printer.Printing and (Canvas.Handle = Printer.Canvas.Handle);
+  IsPrinting := Prn.Printing and (Canvas.Handle = Printer.Canvas.Handle);
   DocMode := dmPrinting;
   p := FPages[Index];
   with p^ do
@@ -6265,17 +6268,70 @@ var
 procedure TfrReport.ExportBeforeModal(Sender: TObject);
 var
   i: Integer;
+  pgList:TStringList;
+
+      procedure ParsePageNumbers;
+      var
+        i, j, n1, n2: Integer;
+        s: String;
+        IsRange: Boolean;
+      begin
+        s := FPageNumbers;
+        while Pos(' ', s) <> 0 do
+          Delete(s, Pos(' ', s), 1);
+        if s = '' then
+          Exit;
+
+        s := s + ',';
+        i := 1;
+        j := 1;
+        n1 := 1;
+        IsRange := False;
+        while i <= Length(s) do
+        begin
+          if s[i] = ',' then
+          begin
+            n2 := StrToInt(Copy(s, j, i - j));
+            j := i + 1;
+            if IsRange then
+              while n1 <= n2 do
+              begin
+                pgList.Add(IntToStr(n1));
+                Inc(n1);
+              end
+              else
+                pgList.Add(IntToStr(n2));
+            IsRange := False;
+          end
+          else if s[i] = '-' then
+          begin
+            IsRange := True;
+            n1 := StrToInt(Copy(s, j, i - j));
+            j := i + 1;
+          end;
+          Inc(i);
+        end;
+      end;
+
 begin
-  Application.ProcessMessages;
-  for i := 0 to EMFPages.Count - 1 do
-  begin
-    FCurrentFilter.OnBeginPage;
-    EMFPages.ExportData(i);
-    InternalOnProgress(i + 1);
+  pgList := TStringList.Create;
+  try
+    ParsePageNumbers;
     Application.ProcessMessages;
-    FCurrentFilter.OnEndPage;
+    for i := 0 to EMFPages.Count - 1 do
+    begin
+      if (pgList.Count = 0) or (pgList.IndexOf(IntToStr(i + 1)) <> -1) then begin
+        FCurrentFilter.OnBeginPage;
+        EMFPages.ExportData(i);
+        InternalOnProgress(i + 1);
+        Application.ProcessMessages;
+        FCurrentFilter.OnEndPage;
+      end;
+    end;
+    FCurrentFilter.OnEndDoc;
+  finally
+    pgList.Free;
   end;
-  FCurrentFilter.OnEndDoc;
   frProgressForm.ModalResult := mrOk;
 end;
 
@@ -6511,26 +6567,26 @@ var
 
   procedure PrintPage(n: Integer);
   begin
-    with Printer, EMFPages[n]^ do
+    with EMFPages[n]^ do
     begin
       if not Prn.IsEqual(pgSize, pgWidth, pgHeight, pgOr) then
       begin
-        EndDoc;
+        Prn.EndDoc;
         Prn.SetPrinterInfo(pgSize, pgWidth, pgHeight, pgOr);
-        BeginDoc;
+        Prn.BeginDoc;
       end
-      else if not f then NewPage;
+      else if not f then Prn.NewPage;
       Prn.FillPrnInfo(PrnInfo);
       Visible := True;
 
       with PrnInfo do
         if pgMargins then
-          EMFPages.Draw(n, Printer.Canvas, Rect(-POfx, -POfy, PPgw - POfx, PPgh - POfy))
+          EMFPages.Draw(n, Prn.Canvas, Rect(-POfx, -POfy, PPgw - POfx, PPgh - POfy))
         else
-          EMFPages.Draw(n, Printer.Canvas, Rect(0, 0, PPw, PPh));
+          EMFPages.Draw(n, Prn.Canvas, Rect(0, 0, PPw, PPh));
 
       Visible := False;
-      EMFPages.Draw(n, Printer.Canvas, Rect(0, 0, 0, 0));
+      EMFPages.Draw(n, Prn.Canvas, Rect(0, 0, 0, 0));
     end;
     InternalOnProgress(n + 1);
     Application.ProcessMessages;
@@ -6538,7 +6594,7 @@ var
   end;
 
 begin
-  Prn.Printer := Printer;
+//  Prn.Printer := Printer;
   pgList := TStringList.Create;
 
   ParsePageNumbers;
@@ -6551,10 +6607,10 @@ begin
     Prn.FillPrnInfo(PrnInfo);
   end;
   if Title <> '' then
-    Printer.Title := 'FastReport: ' + Title else
-    Printer.Title := 'FastReport: ' + LoadStr(SUntitled);
+    Prn.Title := 'FastReport: ' + Title else
+    Prn.Title := 'FastReport: ' + LoadStr(SUntitled);
 
-  Printer.BeginDoc;
+  Prn.BeginDoc;
   f := True;
   for i := 0 to EMFPages.Count - 1 do
     if (pgList.Count = 0) or (pgList.IndexOf(IntToStr(i + 1)) <> -1) then
@@ -6563,12 +6619,12 @@ begin
         PrintPage(i);
         if Terminated then
         begin
-          Printer.Abort;
+          Prn.Abort;
           pgList.Free;
           Exit;
         end;
       end;
-  Printer.EndDoc;
+  Prn.EndDoc;
   pgList.Free;
 end;
 
@@ -6660,6 +6716,41 @@ begin
   end;
 end;
 
+procedure TfrReport.ExportToPDF(PageNumbers, FileName: string);
+var
+  s: String;
+begin
+  ExportStream := TFileStream.Create(FileName, fmCreate);
+  try
+    FCurrentFilter := TfrExportFilter(TfrPDFExportFilter.NewInstance);
+    try
+      FCurrentFilter.Create(ExportStream);
+      FCurrentFilter.OnBeginDoc;
+
+      CurReport := Self;
+      MasterReport := Self;
+      SavedAllPages := EMFPages.Count;
+      FPageNumbers := PageNumbers;
+      with frProgressForm do
+      begin
+        s := LoadStr(SReportPreparing);
+        if Title = '' then
+          Caption := s
+        else
+          Caption := s + ' - ' + Title;
+        FirstCaption := LoadStr(SPagePreparing);
+        Label1.Caption := FirstCaption + '  1';
+        OnBeforeModal := ExportBeforeModal;
+        Show_Modal(Self);
+      end;
+    finally
+      FCurrentFilter.Free;
+      FCurrentFilter := nil;
+    end;
+  finally
+    ExportStream.Free;
+  end;
+end;
 
 // miscellaneous methods
 procedure TfrReport.PrepareDataSets;

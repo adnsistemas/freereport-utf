@@ -36,6 +36,18 @@ type
     procedure SetPrinter(Value: TPrinter);
     procedure SetPrinterIndex(Value: Integer);
     function getPrinter: TPrinter;
+    function getCanvas: TCanvas;
+    function getLogPixX: integer;
+    function getLogPixY: integer;
+    function getPageHeight: integer;
+    function getPageWidth: integer;
+    function getPrinting: boolean;
+    function getRealHeight: integer;
+    function getRealOffX: integer;
+    function getREalOffY: integer;
+    function getRealWidth: integer;
+    function getTitle: string;
+    procedure setTitle(const Value: string);
   public
     Orientation: TPrinterOrientation;
     PaperSize: Integer;
@@ -55,6 +67,21 @@ type
     property Printer: TPrinter read getPrinter write SetPrinter;
     property Printers: TStringList read FPrinters;
     property PrinterIndex: Integer read FPrinterIndex write SetPrinterIndex;
+    property LogPixelsOnX:integer read getLogPixX;
+    property LogPixelsOnY:integer read getLogPixY;
+    property RealPageWidth:integer read getRealWidth;
+    property RealPageHeight:integer read getRealHeight;
+    property RealOffsetX:integer read getRealOffX;
+    property RealOffsetY:integer read getREalOffY;
+    procedure BeginDoc;
+    procedure EndDoc;
+    procedure NewPage;
+    procedure Abort;
+    property Printing:boolean read getPrinting;
+    property Canvas:TCanvas read getCanvas;
+    property Title:string read getTitle write setTitle;
+    property PageWidth:integer read getPageWidth;
+    property PageHeight:integer read getPageHeight;
   end;
 
 
@@ -146,6 +173,16 @@ function DeviceCapabilities(pDevice, pPort: PChar; fwCapability: Word; pOutput: 
   DevMode: PDeviceMode): Integer; stdcall; external winspl name 'DeviceCapabilitiesA';
 
 {----------------------------------------------------------------------------}
+procedure TfrPrinter.Abort;
+begin
+  Self.Printer.Abort;
+end;
+
+procedure TfrPrinter.BeginDoc;
+begin
+  Self.Printer.BeginDoc;
+end;
+
 constructor TfrPrinter.Create;
 var
   i: Integer;
@@ -170,6 +207,11 @@ begin
   inherited Destroy;
 end;
 
+procedure TfrPrinter.EndDoc;
+begin
+  Self.Printer.EndDoc;
+end;
+
 procedure TfrPrinter.GetSettings;
 var
   i: Integer;
@@ -183,8 +225,8 @@ begin
     PaperSize := FMode.dmPaperSize;
 
     Escape(Self.Printer.Handle, GetPhysPageSize, 0, nil, @Size);
-    PaperWidth := Round(Size.X / GetDeviceCaps(Self.Printer.Handle, LOGPIXELSX) * 254);
-    PaperHeight := Round(Size.Y / GetDeviceCaps(Self.Printer.Handle, LOGPIXELSY) * 254);
+    PaperWidth := Round(Size.X / LogPixelsOnX * 254);
+    PaperHeight := Round(Size.Y / LogPixelsOnY * 254);
 
     FillChar(PaperSizes, SizeOf(PaperSizes), 0);
     PaperSizesNum := DeviceCapabilities(FDevice, FPort, DC_PAPERS, @PaperSizes, FMode);
@@ -198,6 +240,11 @@ begin
   finally
     GlobalUnlock(FDeviceMode);
   end;
+end;
+
+function TfrPrinter.getTitle: string;
+begin
+  result := Self.Printer.Title;
 end;
 
 procedure TfrPrinter.SetSettings;
@@ -253,6 +300,11 @@ begin
   GetSettings;
 end;
 
+procedure TfrPrinter.setTitle(const Value: string);
+begin
+  Self.Printer.Title := Value;
+end;
+
 procedure TfrPrinter.FillPrnInfo(var p: TfrPrnInfo);
 var
   kx, ky: Double;
@@ -262,22 +314,24 @@ begin
   if FPrinterIndex = FDefaultPrinter then
     with p do
     begin
-      Pgw := Round(PaperWidth * kx / 254);
-      Pgh := Round(PaperHeight * ky / 254);
-      Ofx := Round(50 * kx / 254);
-      Ofy := Round(50 * ky / 254);
+      kx := kx / 254;
+      ky := ky / 254;
+      Pgw := Round(PaperWidth * kx);
+      Pgh := Round(PaperHeight * ky);
+      Ofx := Round(50 * kx);
+      Ofy := Round(50 * ky);
       Pw := Pgw - Ofx * 2;
       Ph := Pgh - Ofy * 2;
     end
   else
     with p, Self.Printer do
     begin
-      kx := kx / GetDeviceCaps(Handle, LOGPIXELSX);
-      ky := ky / GetDeviceCaps(Handle, LOGPIXELSY);
-      PPgw := GetDeviceCaps(Handle, PHYSICALWIDTH); Pgw := Round(PPgw * kx);
-      PPgh := GetDeviceCaps(Handle, PHYSICALHEIGHT); Pgh := Round(PPgh * ky);
-      POfx := GetDeviceCaps(Handle, PHYSICALOFFSETX); Ofx := Round(POfx * kx);
-      POfy := GetDeviceCaps(Handle, PHYSICALOFFSETY); Ofy := Round(POfy * ky);
+      kx := kx / LogPixelsOnX;
+      ky := ky / LogPixelsOnY;
+      PPgw := RealPageWidth; Pgw := Round(PPgw * kx);
+      PPgh := RealPageHeight; Pgh := Round(PPgh * ky);
+      POfx := RealOffsetX; Ofx := Round(POfx * kx);
+      POfy := RealOffsetY; Ofy := Round(POfy * ky);
       PPw := PageWidth; Pw := Round(PPw * kx);
       PPh := PageHeight; Ph := Round(PPh * ky);
     end;
@@ -291,6 +345,11 @@ begin
      (PaperHeight = pgHeight) and (Orientation = pgOr)
   else
     Result := (PaperSize = pgSize) and (Orientation = pgOr);
+end;
+
+procedure TfrPrinter.NewPage;
+begin
+  Self.Printer.NewPage;
 end;
 
 procedure TfrPrinter.SetPrinterInfo(pgSize, pgWidth, pgHeight: Integer;
@@ -329,11 +388,61 @@ begin
   result := Printer;
 end;
 
+function TfrPrinter.getCanvas: TCanvas;
+begin
+  result := Self.Printer.Canvas;
+end;
+
+function TfrPrinter.getLogPixX: integer;
+begin
+  result := GetDeviceCaps(Printer.Handle, LOGPIXELSX);
+end;
+
+function TfrPrinter.getLogPixY: integer;
+begin
+  result := GetDeviceCaps(Printer.Handle, LOGPIXELSY);
+end;
+
+function TfrPrinter.getPageHeight: integer;
+begin
+  result := Self.Printer.PageHeight;
+end;
+
+function TfrPrinter.getPageWidth: integer;
+begin
+  result := Self.Printer.PageWidth;
+end;
+
 function TfrPrinter.getPrinter: TPrinter;
 begin
   if not Assigned(FPrinter) then
     FPrinter := globalPrinter;
   result := FPrinter;
+end;
+
+function TfrPrinter.getPrinting: boolean;
+begin
+  result := Self.Printer.Printing;
+end;
+
+function TfrPrinter.getRealHeight: integer;
+begin
+  result := GetDeviceCaps(Self.Printer.Handle, PHYSICALHEIGHT);
+end;
+
+function TfrPrinter.getRealOffX: integer;
+begin
+  result := GetDeviceCaps(Self.Printer.Handle, PHYSICALOFFSETX);
+end;
+
+function TfrPrinter.getREalOffY: integer;
+begin
+  result := GetDeviceCaps(Self.Printer.Handle, PHYSICALOFFSETY);
+end;
+
+function TfrPrinter.getRealWidth: integer;
+begin
+  result := GetDeviceCaps(Self.Printer.Handle, PHYSICALWIDTH);
 end;
 
 procedure TfrPrinter.SetPrinterIndex(Value: Integer);

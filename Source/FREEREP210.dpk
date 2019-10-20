@@ -86,6 +86,7 @@ contains
   fr_var in 'fr_var.pas',
   fr_vared in 'fr_vared.pas',
   fr_vbnd in 'fr_vbnd.pas',
-  fr_view in 'fr_view.pas';
+  fr_view in 'fr_view.pas',
+  fr_e_pdf in 'fr_e_pdf.pas';
 
 end.
