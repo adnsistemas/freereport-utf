@@ -217,55 +217,71 @@ begin
   with Range do
   begin
     hdc := GetDC(0);
-    hdcTarget := hdc;
-    LogX := Screen.PixelsPerInch;
-    LogY := LogX;
+    try
+      hdcTarget := hdc;
+      LogX := Screen.PixelsPerInch;
+      LogY := LogX;
 
-    LowDy := 0;
-    HighDY := 1000000;
+      LowDy := 0;
+      HighDY := 1000000;
 
-    rc := Rect(0, 0, Round(DX * 1440 / LogX), Round(HighDY * 1440.0 / LogY));
-    rcPage := rc;
-    chrg.cpMax := -1;
-    chrg.cpMin := 0;
-    MaxLen := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
-    if MaxLen < SRichEdit.GetTextLen - 2 then begin
-      //for some reason in some cases the last index is not properly returned
-      rc := Rect(0, 0, Round(DX * 1440 / LogX), Round((HighDY div 4)* 3 * 1440.0 / LogY));
+      rc := Rect(0, 0, Round(DX * 1440 / LogX), Round(HighDY * 1440.0 / LogY));
       rcPage := rc;
-      NewDY := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
-      if NewDY <> MaxLen then
-        MaxLen := SRichEdit.GetTextLen
-      else
-        Inc(MaxLen,2);
-    end;
-    Dec(MaxLen,2);//2 is #D#A added to avoid eating of last char
-    if CharFrom < MaxLen - 1 then begin
-      while HighDy - LowDy > 8 do //no tiene ningún sentido seguir si ya pasé el mínimo
-      begin
-        NewDY := (LowDy + HighDy) div 2;//LowDy + (HighDy - LowDy) div 2;
-        rc := Rect(0, 0, Round(DX * 1440 / LogX), Round(NewDY * 1440.0 / LogY));
+      chrg.cpMax := -1;
+      chrg.cpMin := 0;
+      MaxLen := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
+      if MaxLen < SRichEdit.GetTextLen - 2 then begin
+        //for some reason in some cases the last index is not properly returned
+        rc := Rect(0, 0, Round(DX * 1440 / LogX), Round((HighDY div 4)* 3 * 1440.0 / LogY));
+        rcPage := rc;
+        NewDY := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
+        if NewDY <> MaxLen then
+          MaxLen := SRichEdit.GetTextLen
+        else
+          Inc(MaxLen,2);
+      end;
+      Dec(MaxLen,2);//2 is #D#A added to avoid eating of last char
+      if CharFrom < MaxLen - 1 then begin
+        //calculate heigh based in what actually has to be shown
+        rc.Bottom := Round(HighDY * 1440.0 / LogY);
         rcPage := rc;
         LastChar := CharFrom;
         chrg.cpMax := -1;
-        repeat
-          chrg.cpMin := LastChar;
-          LastChar := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
-          Fit := (LastChar >= MaxLen) or (LastChar = -1) or (LastChar = 0);
-          StopRender := ((LastChar < MaxLen) and (LastChar <> -1)) or Fit;
-        until StopRender;
-
+        chrg.cpMin := LastChar;
+        LastChar := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
+        Fit := (LastChar >= MaxLen) or (LastChar = -1) or (LastChar = 0);
         if Fit then
-          HighDy := NewDY else
-          LowDy := NewDY;
-      end;
-    end else if CharFrom < MaxLen then
-      HighDy := MinHeight
-    else
-      HighDy := 0;
-    ReleaseDC(0, hdc);
+          HighDY := Round(rc.Bottom * LogY / 1440) + 1
+        else begin
+          LowDY := Round(rc.Bottom * LogY / 1440) + 1;
+          while HighDy - LowDy > 8 do //no tiene ningún sentido seguir si ya pasé el mínimo
+          begin
+            NewDY := (LowDy + HighDy) div 2;//LowDy + (HighDy - LowDy) div 2;
+            rc.Bottom := Round(NewDY * 1440.0 / LogY);
+            rcPage := rc;
+            LastChar := CharFrom;
+            chrg.cpMax := -1;
+            repeat
+              chrg.cpMin := LastChar;
+              LastChar := SRichEdit.Perform(EM_FORMATRANGE, 0, Integer(@Range));
+              Fit := (LastChar >= MaxLen) or (LastChar = -1) or (LastChar = 0);
+              StopRender := ((LastChar < MaxLen) and (LastChar <> -1)) or Fit;
+            until StopRender;
+
+            if Fit then
+              HighDy := NewDY else
+              LowDy := NewDY;
+          end;
+        end;
+      end else if CharFrom < MaxLen then
+        HighDy := MinHeight
+      else
+        HighDy := 0;
+    finally
+      ReleaseDC(0, hdc);
+      SRichEdit.Perform(EM_FORMATRANGE, 0, 0);
+    end;
   end;
-  SRichEdit.Perform(EM_FORMATRANGE, 0, 0);
   if HighDy < MinHeight then begin
     (* check is not a calculation issue when just one line left *)
     SRichEdit.Lines.Add('.');
@@ -411,6 +427,9 @@ begin
       GetRichData(i);
   CharFrom := 0;
   Result := DoCalcHeight;
+  //if not "back to 0" then some pieces of the RichEdit are "eaten" on multipage prints
+  //not sure this is the "only", nor the "right", place to do it
+  LastChar := 0;
 end;
 
 function TfrRichView.MinHeight: Integer;
