@@ -311,7 +311,7 @@ var
 begin
   kx := 93 / 1.022;
   ky := 93 / 1.015;
-  if FPrinterIndex = FDefaultPrinter then
+  if FPrinterIndex = FDefaultPrinter then begin
     with p do
     begin
       kx := kx / 254;
@@ -322,19 +322,21 @@ begin
       Ofy := Round(50 * ky);
       Pw := Pgw - Ofx * 2;
       Ph := Pgh - Ofy * 2;
-    end
-  else
-    with p, Self.Printer do
-    begin
-      kx := kx / LogPixelsOnX;
-      ky := ky / LogPixelsOnY;
-      PPgw := RealPageWidth; Pgw := Round(PPgw * kx);
-      PPgh := RealPageHeight; Pgh := Round(PPgh * ky);
-      POfx := RealOffsetX; Ofx := Round(POfx * kx);
-      POfy := RealOffsetY; Ofy := Round(POfy * ky);
-      PPw := PageWidth; Pw := Round(PPw * kx);
-      PPh := PageHeight; Ph := Round(PPh * ky);
     end;
+    kx := 93 / 1.022;
+    ky := 93 / 1.015;
+  end;
+  with p do
+  begin
+    kx := kx / LogPixelsOnX;
+    ky := ky / LogPixelsOnY;
+    PPgw := RealPageWidth; Pgw := Round(PPgw * kx);
+    PPgh := RealPageHeight; Pgh := Round(PPgh * ky);
+    POfx := RealOffsetX; Ofx := Round(POfx * kx);
+    POfy := RealOffsetY; Ofy := Round(POfy * ky);
+    PPw := PageWidth; Pw := Round(PPw * kx);
+    PPh := PageHeight; Ph := Round(PPh * ky);
+  end;
 end;
 
 function TfrPrinter.IsEqual(pgSize, pgWidth, pgHeight: Integer;
