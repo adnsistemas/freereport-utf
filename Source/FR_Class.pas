@@ -6651,9 +6651,11 @@ var
 begin
   Result := True;
   try
-    prevPrinter := Prn.Printers[OldIndex];
-    Prn.PrinterIndex := NewIndex;
-    Prn.PaperSize := -1;
+    if OldIndex <> NewIndex then begin
+      prevPrinter := Prn.Printers[OldIndex];
+      Prn.PrinterIndex := NewIndex;
+      Prn.PaperSize := -1;
+    end;
     ChangePages;
   except
     on Exception do

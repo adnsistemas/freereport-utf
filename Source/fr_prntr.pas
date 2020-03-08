@@ -309,13 +309,22 @@ procedure TfrPrinter.FillPrnInfo(var p: TfrPrnInfo);
 var
   kx, ky: Double;
 begin
-  kx := 93 / 1.022;
-  ky := 93 / 1.015;
-  if FPrinterIndex = FDefaultPrinter then begin
+  kx := 93 / 1.022 / LogPixelsOnX;
+  ky := 93 / 1.015 / LogPixelsOnY;
+  with p do
+  begin
+    PPgw := RealPageWidth; Pgw := Round(PPgw * kx);
+    PPgh := RealPageHeight; Pgh := Round(PPgh * ky);
+    POfx := RealOffsetX; Ofx := Round(POfx * kx);
+    POfy := RealOffsetY; Ofy := Round(POfy * ky);
+    PPw := PageWidth; Pw := Round(PPw * kx);
+    PPh := PageHeight; Ph := Round(PPh * ky);
+  end;
+  if (FPrinterIndex = FDefaultPrinter) then begin
+    kx := 93 / 1.022 / 254;
+    ky := 93 / 1.015 / 254;
     with p do
     begin
-      kx := kx / 254;
-      ky := ky / 254;
       Pgw := Round(PaperWidth * kx);
       Pgh := Round(PaperHeight * ky);
       Ofx := Round(50 * kx);
@@ -323,19 +332,6 @@ begin
       Pw := Pgw - Ofx * 2;
       Ph := Pgh - Ofy * 2;
     end;
-    kx := 93 / 1.022;
-    ky := 93 / 1.015;
-  end;
-  with p do
-  begin
-    kx := kx / LogPixelsOnX;
-    ky := ky / LogPixelsOnY;
-    PPgw := RealPageWidth; Pgw := Round(PPgw * kx);
-    PPgh := RealPageHeight; Pgh := Round(PPgh * ky);
-    POfx := RealOffsetX; Ofx := Round(POfx * kx);
-    POfy := RealOffsetY; Ofy := Round(POfy * ky);
-    PPw := PageWidth; Pw := Round(PPw * kx);
-    PPh := PageHeight; Ph := Round(PPh * ky);
   end;
 end;
 
@@ -397,12 +393,20 @@ end;
 
 function TfrPrinter.getLogPixX: integer;
 begin
-  result := GetDeviceCaps(Printer.Handle, LOGPIXELSX);
+  try
+    result := GetDeviceCaps(Printer.Handle, LOGPIXELSX);
+  except
+    result := 254;
+  end;
 end;
 
 function TfrPrinter.getLogPixY: integer;
 begin
-  result := GetDeviceCaps(Printer.Handle, LOGPIXELSY);
+  try
+    result := GetDeviceCaps(Printer.Handle, LOGPIXELSY);
+  except
+    result := 254;
+  end;
 end;
 
 function TfrPrinter.getPageHeight: integer;
@@ -418,7 +422,7 @@ end;
 function TfrPrinter.getPrinter: TPrinter;
 begin
   if not Assigned(FPrinter) then
-    FPrinter := globalPrinter;
+    Printer := globalPrinter;
   result := FPrinter;
 end;
 
@@ -429,22 +433,38 @@ end;
 
 function TfrPrinter.getRealHeight: integer;
 begin
-  result := GetDeviceCaps(Self.Printer.Handle, PHYSICALHEIGHT);
+  try
+    result := GetDeviceCaps(Self.Printer.Handle, PHYSICALHEIGHT);
+  except
+    result := PageHeight;
+  end;
 end;
 
 function TfrPrinter.getRealOffX: integer;
 begin
-  result := GetDeviceCaps(Self.Printer.Handle, PHYSICALOFFSETX);
+  try
+    result := GetDeviceCaps(Self.Printer.Handle, PHYSICALOFFSETX);
+  except
+    result := 50;
+  end;
 end;
 
 function TfrPrinter.getREalOffY: integer;
 begin
-  result := GetDeviceCaps(Self.Printer.Handle, PHYSICALOFFSETY);
+  try
+    result := GetDeviceCaps(Self.Printer.Handle, PHYSICALOFFSETY);
+  except
+    result := 50;
+  end;
 end;
 
 function TfrPrinter.getRealWidth: integer;
 begin
-  result := GetDeviceCaps(Self.Printer.Handle, PHYSICALWIDTH);
+  try
+    result := GetDeviceCaps(Self.Printer.Handle, PHYSICALWIDTH);
+  except
+    result := PageWidth;
+  end;
 end;
 
 procedure TfrPrinter.SetPrinterIndex(Value: Integer);

@@ -55,6 +55,7 @@ type
     property AllPages: Integer read GetAllPages;
     property Page: Integer read GetPage write SetPage;
     property Zoom: Double read GetZoom write SetZoom;
+    procedure ChangePrinter(FromIndex,ToIndex:integer);
   published
     property ScrollBars: TScrollStyle read FScrollBars write SetScrollBars;
   end;
@@ -190,6 +191,7 @@ type
   public
     { Public declarations }
     procedure Show_Modal(ADoc: Pointer);
+    procedure ChangePrinter(FromIndex,ToIndex:integer);
   end;
 
 
@@ -230,6 +232,11 @@ procedure TfrPreview.WMSize(var Message: TMessage);
 begin
   inherited;
   FWindow.FormResize(nil);
+end;
+
+procedure TfrPreview.ChangePrinter(FromIndex, ToIndex: integer);
+begin
+  FWindow.ChangePrinter(FromIndex,ToIndex);
 end;
 
 procedure TfrPreview.Connect(Doc: Pointer);
@@ -607,6 +614,27 @@ begin
   if TfrReport(Doc).ModalPreview then
     ShowModal else
     Show;
+end;
+
+procedure TfrPreviewForm.ChangePrinter(FromIndex, ToIndex: integer);
+var
+  Pages: String;
+  ind: Integer;
+begin
+  if (EMFPages = nil) or (Printer.Printers.Count = 0) then Exit;
+  if TfrReport(Doc).CanRebuild then begin
+    //change paper size first, then change printer if it actually changed
+    Prn.PrinterIndex := ToIndex;
+    for ind := 0 to TfrReport(Doc).Pages.Count - 1 do
+      TfrReport(Doc).Pages[ind].ChangePaper(Prn.PaperSize,Prn.PaperWidth,Prn.PaperHeight,Prn.Orientation);
+    if FromIndex <> ToIndex then
+      TfrReport(Doc).ChangePrinter(FromIndex, ToIndex);
+    TfrEMFPages(EMFPages).Free;
+    EMFPages := nil;
+    TfrReport(Doc).PrepareReport;
+    Connect(Doc);
+  end;
+  RedrawAll;
 end;
 
 procedure TfrPreviewForm.Connect(ADoc: Pointer);

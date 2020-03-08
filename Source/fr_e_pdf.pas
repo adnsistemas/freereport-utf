@@ -36,7 +36,7 @@ type
 
 implementation
 
-uses FR_Utils, FR_Const;
+uses FR_Utils, FR_Const, FR_Prntr, Printers;
 
 
 procedure TfrPDFExportFilter.OnData(x, y: Integer; View: TfrView);
@@ -54,6 +54,9 @@ end;
 procedure TfrPDFExportFilter.OnBeginDoc;
 begin
   FPDF := TPDFDocumentGDI.Create();
+  FPDF.DefaultPageLandscape := Prn.Orientation = poLandscape;
+  FPDF.DefaultPageWidth := Round(Prn.PaperWidth / 3.5294);
+  FPDF.DefaultPageHeight := Round(Prn.PaperHeight / 3.5294);
   FPDF.NewDoc;
   FPDFPage := FPDF.AddPage;
   FFirstPage := True;
